@@ -663,6 +663,25 @@ class Trainer(TrainerIOMixin,
     # -----------------------------
     # MODEL TRAINING
     # -----------------------------
+    def fit_epoch(self, model):
+        if not self.single_gpu:
+            raise RuntimeError('Currently only supports single gpu training')
+        if self.optimizers is None:
+            model.cuda(self.root_gpu)
+
+            # CHOOSE OPTIMIZER
+            # allow for lr schedulers as well
+            self.optimizers, self.lr_schedulers = self.init_optimizers(model.configure_optimizers())
+
+            if self.use_amp:
+                # An example
+                model, optimizers = model.configure_apex(amp, model, self.optimizers, self.amp_level)
+                self.optimizers = optimizers
+
+            self.run_pretrain_routine(model)
+        self.wrapped_run_training_epoch(self.current_epoch)
+        self.current_epoch += 1
+
     def fit(self, model):
         r"""
         Runs the full optimization routine.
@@ -705,6 +724,7 @@ class Trainer(TrainerIOMixin,
             self.optimizers, self.lr_schedulers = self.init_optimizers(model.configure_optimizers())
 
             self.run_pretrain_routine(model)
+            self.train()
 
         # return 1 when finished
         # used for testing or when we need to know that training succeeded
@@ -824,9 +844,6 @@ class Trainer(TrainerIOMixin,
         # clear cache before training
         if self.on_gpu:
             torch.cuda.empty_cache()
-
-        # CORE TRAINING LOOP
-        self.train()
 
     def test(self, model=None):
         r"""

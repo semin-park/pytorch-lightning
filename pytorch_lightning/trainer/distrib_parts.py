@@ -439,6 +439,7 @@ class TrainerDPMixin(ABC):
             self.optimizers = optimizers
 
         self.run_pretrain_routine(model)
+        self.train()
 
     def dp_train(self, model):
 
@@ -469,6 +470,7 @@ class TrainerDPMixin(ABC):
         model = LightningDataParallel(model, device_ids=device_ids)
 
         self.run_pretrain_routine(model)
+        self.train()
 
 
 def normalize_parse_gpu_string_input(s):
