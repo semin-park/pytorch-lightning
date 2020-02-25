@@ -888,6 +888,40 @@ class Trainer(TrainerIOMixin,
     # -----------------------------
     # MODEL TRAINING
     # -----------------------------
+    def fit_epoch(
+            self,
+            model: LightningModule,
+            train_dataloader: Optional[DataLoader] = None,
+            val_dataloaders: Optional[DataLoader] = None,
+            test_dataloaders: Optional[DataLoader] = None
+    ):
+        if any([self.use_ddp2, self.use_ddp, self.use_dp]):
+            raise RuntimeError('Currently only supports cpu / single gpu training')
+        # fit_epoch called for the first time
+        if self.optimizers is None:
+            # Fit begin callbacks
+            self.on_fit_start()
+
+            # set up the passed in dataloaders (if needed)
+            self.__set_fit_dataloaders(model, train_dataloader, val_dataloaders, test_dataloaders)
+            if self.single_gpu:
+                model.cuda(self.root_gpu)
+
+            # CHOOSE OPTIMIZER
+            # allow for lr schedulers as well
+            self.optimizers, self.lr_schedulers = self.init_optimizers(model.configure_optimizers())
+
+            if self.use_amp:
+                if not self.single_gpu:
+                    raise MisconfigurationException('amp + cpu is not supported.')
+                # An example
+                model, optimizers = model.configure_apex(amp, model, self.optimizers, self.amp_level)
+                self.optimizers = optimizers
+
+            self.run_pretrain_routine(model)
+        self.wrapped_run_training_epoch(self.current_epoch)
+        self.current_epoch += 1
+
     def fit(
             self,
             model: LightningModule,
@@ -982,6 +1016,7 @@ class Trainer(TrainerIOMixin,
             self.optimizers, self.lr_schedulers = self.init_optimizers(model.configure_optimizers())
 
             self.run_pretrain_routine(model)
+            self.train()
 
         # Fit end callbacks
         self.on_fit_end()
@@ -1153,9 +1188,6 @@ class Trainer(TrainerIOMixin,
         # clear cache before training
         if self.on_gpu:
             torch.cuda.empty_cache()
-
-        # CORE TRAINING LOOP
-        self.train()
 
     def test(self, model: Optional[LightningModule] = None):
         r"""

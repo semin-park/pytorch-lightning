@@ -337,6 +337,7 @@ class TrainerDDPMixin(ABC):
 
         # continue training routine
         self.run_pretrain_routine(model)
+        self.train()
 
     def resolve_root_node_address(self, root_node):
         if '[' in root_node:
