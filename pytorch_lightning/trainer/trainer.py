@@ -664,16 +664,16 @@ class Trainer(TrainerIOMixin,
     # MODEL TRAINING
     # -----------------------------
     def fit_epoch(self, model):
-        if not self.single_gpu:
-            raise RuntimeError('Currently only supports single gpu training')
+        if any([self.use_ddp2, self.use_ddp, self.use_dp]):
+            raise RuntimeError('Currently only supports cpu / single gpu training')
         if self.optimizers is None:
             model.cuda(self.root_gpu)
 
-            # CHOOSE OPTIMIZER
-            # allow for lr schedulers as well
             self.optimizers, self.lr_schedulers = self.init_optimizers(model.configure_optimizers())
 
             if self.use_amp:
+                if not self.single_gpu:
+                    raise MisconfigurationException('amp + cpu is not supported.  Please use a GPU option')
                 # An example
                 model, optimizers = model.configure_apex(amp, model, self.optimizers, self.amp_level)
                 self.optimizers = optimizers
