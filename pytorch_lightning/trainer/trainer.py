@@ -916,6 +916,14 @@ class Trainer(TrainerIOMixin,
                 self.optimizers = optimizers
 
             self.run_pretrain_routine(model)
+
+            # load data
+            self.reset_train_dataloader(model)
+            self.reset_val_dataloader(model)
+
+            # Train begin callbacks
+            model.on_train_start()
+            self.on_train_start()
         self.wrapped_run_training_epoch(self.current_epoch)
         self.current_epoch += 1
 
