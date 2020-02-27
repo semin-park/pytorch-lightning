@@ -675,7 +675,6 @@ class Trainer(TrainerIOMixin,
             if self.use_amp:
                 if not self.single_gpu:
                     raise MisconfigurationException('amp + cpu is not supported.  Please use a GPU option')
-                # An example
                 model, optimizers = model.configure_apex(amp, model, self.optimizers, self.amp_level)
                 self.optimizers = optimizers
 
