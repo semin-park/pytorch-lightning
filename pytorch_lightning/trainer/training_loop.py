@@ -446,7 +446,6 @@ class TrainerTrainLoopMixin(ABC):
                     return
 
     def run_training_epoch(self):
-
         # Epoch begin callbacks
         self.on_epoch_start()
 
