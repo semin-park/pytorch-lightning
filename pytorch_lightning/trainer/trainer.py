@@ -907,8 +907,6 @@ class Trainer(TrainerIOMixin,
             if self.single_gpu:
                 model.cuda(self.root_gpu)
 
-            # CHOOSE OPTIMIZER
-            # allow for lr schedulers as well
             self.optimizers, self.lr_schedulers = self.init_optimizers(model.configure_optimizers())
 
             if self.use_amp:
