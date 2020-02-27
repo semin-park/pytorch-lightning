@@ -667,7 +667,8 @@ class Trainer(TrainerIOMixin,
         if any([self.use_ddp2, self.use_ddp, self.use_dp]):
             raise RuntimeError('Currently only supports cpu / single gpu training')
         if self.optimizers is None:
-            model.cuda(self.root_gpu)
+            if self.single_gpu:
+                model.cuda(self.root_gpu)
 
             self.optimizers, self.lr_schedulers = self.init_optimizers(model.configure_optimizers())
 
