@@ -360,6 +360,9 @@ class TrainerTrainLoopMixin(ABC):
             log.info('Detected KeyboardInterrupt, attempting graceful shutdown...')
             self.run_training_teardown()
 
+        # Train end callbacks
+        self.on_train_end()
+
     def wrapped_run_training_epoch(self, epoch):
         # set seed for distributed sampler (enables shuffling for each epoch)
         if self.use_ddp and hasattr(self.train_dataloader.sampler, 'set_epoch'):
